@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Campus Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ea66db 0%, #8903f6 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #46e5a8, #e1ed3a);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: messageAppear 0.5s ease-out;
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.bot {
+            text-align: left;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            line-height: 1.4;
+            position: relative;
+        }
+
+        .user .message-bubble {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot .message-bubble {
+            background: white;
+            color: #374151;
+            border: 2px solid #e5e7eb;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 2px solid #e5e7eb;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: #e57b46;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #e546bd, #ed3ac0);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 20px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #64748b;
+        }
+
+        .quick-action:hover {
+            background: #e2e8f0;
+            transform: translateY(-1px);
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px 0;
+        }
+
+        .typing-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingAnimation {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .scroll-to-bottom {
+            position: absolute;
+            bottom: 80px;
+            right: 30px;
+            background: #e546d0;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .scroll-to-bottom:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">
+            <h1>🎓 Smart Campus Assistant</h1>
+            <p>Your AI-powered guide to campus life</p>
+        </div>
+
+        <div class="quick-actions">
+            <div class="quick-action" onclick="sendQuickMessage('What are the library hours?')">📚 Library Hours</div>
+            <div class="quick-action" onclick="sendQuickMessage('Show me dining options')">🍽️ Dining</div>
+            <div class="quick-action" onclick="sendQuickMessage('Campus events today')">📅 Events</div>
+            <div class="quick-action" onclick="sendQuickMessage('Where is the registrar office?')">📍 Locations</div>
+            <div class="quick-action" onclick="sendQuickMessage('Emergency contacts')">🚨 Emergency</div>
+            <div class="quick-action" onclick="sendQuickMessage('Emergency contacts')">class room</div>
+
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-bubble">
+                    👋 Hello! I'm your Smart Campus Assistant. I can help you with:
+                    <br><br>
+                    • 📚 Library services and hours
+                    <br>• 🍽️ Dining hall information
+                    <br>• 📅 Campus events and schedules
+                    <br>• 📍 Building locations and directions
+                    <br>• 🎓 Academic resources
+                    <br>• 🚨 Emergency information
+                    <br><br>
+                    What would you like to know about campus today?
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="message bot">
+                <div class="message-bubble">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input 
+                type="text" 
+                class="input-field" 
+                id="messageInput" 
+                placeholder="Ask me anything about campus..."
+                onkeypress="handleKeyPress(event)"
+            >
+            <button class="send-button" onclick="sendMessage()">
+                ➤
+            </button>
+        </div>
+
+        <button class="scroll-to-bottom" id="scrollButton" onclick="scrollToBottom()">
+            ↓
+        </button>
+    </div>
+
+    <script>
+        // Campus knowledge base
+        const campusData = {
+            library: {
+                hours: "📚 Library Hours:\n• Monday-Thursday: 7:00 AM - 12:00 AM\n• Friday: 7:00 AM - 10:00 PM\n• Saturday: 9:00 AM - 10:00 PM\n• Sunday: 10:00 AM - 12:00 AM\n\nStudy rooms available 24/7 with student ID!",
+                services: "📖 Library Services:\n• Book checkout and renewals\n• Computer and printing access\n• Study rooms (reservable online)\n• Research assistance\n• Interlibrary loans\n• Group study areas\n• Silent study floors"
+            },
+            dining: {
+                options: "🍽️ Dining Options:\n• Main Cafeteria: All-day dining\n• Student Union Food Court: 11 AM - 9 PM\n• Coffee Shop: 7 AM - 7 PM\n• Grab & Go Market: 24/7\n• Pizza Place: 4 PM - 11 PM\n\nMeal plans accepted at all locations!",
+                hours: "⏰ Dining Hours:\n• Breakfast: 7:00 AM - 10:00 AM\n• Lunch: 11:00 AM - 2:00 PM\n• Dinner: 5:00 PM - 8:00 PM\n• Late night snacks available until 11 PM"
+            },
+            events: {
+                today: "📅 Today's Events:\n• 10:00 AM - Career Fair (Student Union)\n• 2:00 PM - Guest Lecture: AI in Medicine (Science Building)\n• 6:00 PM - Basketball Game vs. State University\n• 8:00 PM - Movie Night: Latest Blockbuster (Outdoor Theater)",
+                upcoming: "🗓️ Upcoming Events:\n• Tomorrow: Club Fair\n• Friday: Spring Festival\n• Weekend: Homecoming Activities\n• Next Week: Finals Study Sessions\n\nCheck the student portal for more details!"
+            },
+            locations: {
+                registrar: "📍 Registrar's Office:\n• Location: Administration Building, 2nd Floor, Room 201\n• Hours: Mon-Fri 8:00 AM - 5:00 PM\n• Services: Transcripts, enrollment, graduation\n• Phone: (555) 123-4567",
+                buildings: "🏫 Key Buildings:\n• Administration: Main campus entrance\n• Library: Center of campus\n• Student Union: North side, dining and activities\n• Science Building: East campus\n• Dormitories: South campus\n• Parking: Multiple lots around campus"
+            },
+            emergency: {
+                contacts: "🚨 Emergency Contacts:\n• Campus Security: (555) 911-HELP\n• Medical Emergency: Call 911\n• Campus Health Center: (555) 123-CARE\n• Counseling Services: (555) 123-TALK\n• Title IX Office: (555) 123-SAFE\n• Maintenance Emergency: (555) 123-FIXIT"
+            },
+            academic: {
+                resources: "🎓 Academic Resources:\n• Tutoring Center: Free peer tutoring\n• Writing Center: Essay and paper help\n• Math Lab: Drop-in math assistance\n• Computer Lab: 24/7 access with ID\n• Study Groups: Check department boards\n• Office Hours: See individual professor schedules"
+            }
+        };
+
+        function addMessage(content, isUser = false) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            bubbleDiv.innerHTML = content.replace(/\n/g, '<br>');
+            
+            messageDiv.appendChild(bubbleDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            scrollToBottom();
+        }
+
+        function showTyping() {
+            document.getElementById('typingIndicator').style.display = 'block';
+            scrollToBottom();
+        }
+
+        function hideTyping() {
+            document.getElementById('typingIndicator').style.display = 'none';
+        }
+
+        function getResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Library queries
+            if (lowerMessage.includes('library')) {
+                if (lowerMessage.includes('hour')) {
+                    return campusData.library.hours;
+                } else {
+                    return campusData.library.services;
+                }
+            }
+            
+            // Dining queries
+            if (lowerMessage.includes('dining') || lowerMessage.includes('food') || lowerMessage.includes('eat') || lowerMessage.includes('cafeteria')) {
+                if (lowerMessage.includes('hour')) {
+                    return campusData.dining.hours;
+                } else {
+                    return campusData.dining.options;
+                }
+            }
+            
+            // Events queries
+            if (lowerMessage.includes('event')) {
+                if (lowerMessage.includes('today') || lowerMessage.includes('now')) {
+                    return campusData.events.today;
+                } else {
+                    return campusData.events.upcoming;
+                }
+            }
+            
+            // Location queries
+            if (lowerMessage.includes('registrar') || lowerMessage.includes('registration')) {
+                return campusData.locations.registrar;
+            }
+            
+            if (lowerMessage.includes('location') || lowerMessage.includes('building') || lowerMessage.includes('where')) {
+                return campusData.locations.buildings;
+            }
+            
+            // Emergency queries
+            if (lowerMessage.includes('emergency') || lowerMessage.includes('help') || lowerMessage.includes('contact')) {
+                return campusData.emergency.contacts;
+            }
+            
+            // Academic queries
+            if (lowerMessage.includes('tutor') || lowerMessage.includes('study') || lowerMessage.includes('academic')) {
+                return campusData.academic.resources;
+            }
+            
+            // Greetings
+            if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+                return "👋 Hello! I'm here to help you navigate campus life. You can ask me about library hours, dining options, events, building locations, or any other campus information you need!";
+            }
+            
+            // Default response
+            return "🤔 I'm not sure about that specific question, but I can help you with:\n\n• 📚 Library information\n• 🍽️ Dining and food services\n• 📅 Campus events\n• 📍 Building locations\n• 🎓 Academic resources\n• 🚨 Emergency contacts\n\nTry asking about any of these topics, or use the quick action buttons above!";
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            // Add user message
+            addMessage(message, true);
+            input.value = '';
+            
+            // Show typing indicator
+            showTyping();
+            
+            // Simulate AI processing delay
+            setTimeout(() => {
+                hideTyping();
+                const response = getResponse(message);
+                addMessage(response);
+            }, 1000 + Math.random() * 1000);
+        }
+
+        function sendQuickMessage(message) {
+            document.getElementById('messageInput').value = message;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function scrollToBottom() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Show/hide scroll button
+        document.getElementById('chatMessages').addEventListener('scroll', function() {
+            const scrollButton = document.getElementById('scrollButton');
+            const isScrolledToBottom = this.scrollHeight - this.clientHeight <= this.scrollTop + 1;
+            
+            if (isScrolledToBottom) {
+                scrollButton.style.display = 'none';
+            } else {
+                scrollButton.style.display = 'flex';
+            }
+        });
+
+        // Focus on input when page loads
+        window.addEventListener('load', function() {
+            document.getElementById('messageInput').focus();
+        });
+    </script>
+</body>
+</html>
